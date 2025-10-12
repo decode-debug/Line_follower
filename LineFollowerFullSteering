@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+from ev3dev2.sensor import INPUT_1, INPUT_2
+from ev3dev2.sensor.lego import ColorSensor
+from ev3dev2.motor import LargeMotor, OUTPUT_A, OUTPUT_B
+from ev3dev2.motor import MediumMotor, OUTPUT_C
+from ev3dev2.motor import ServoMotor, MotorSet
+
+# Initialize the color sensor
+left_color_sensor = ColorSensor(INPUT_1) # Connect to port 1 (1st port from the left)
+right_color_sensor = ColorSensor(INPUT_2) # Connect to port 2 (2st port from the left)
+
+# Initialize the motors
+left_motor = LargeMotor(OUTPUT_A)  # Connect to port A (left motor)
+right_motor = LargeMotor(OUTPUT_B) # Connect to port B (right motor)
+steermotor = MediumMotor(OUTPUT_C) # Connect to port C (steering motor)
+group = MotorSet((OUTPUT_A, OUTPUT_B))
+robotsteering = ServoMotor(OUTPUT_C)
+
+# Steering parameters
+BASE = 40              # Base speed
+KP   = 1.2             # Amplification of the proportional term
+KI   = 0.0             # Amplification of the integral term
+CLAMP = 100            # speed clamp
+DT = 0.02              # sampling time (50Hz)
+
+# Color thresholds
+BLACK = 15
+WHITE = 85
+
+
+
+from ev3dev2.motor import SpeedPercent
+
+def set_speed_percent(group, speed=0):
+    """
+    Set speed for a motor or motor set in percents of max speed.
+    :param group: Motor or MotorSet instance
+    :param speed: Speed in percents (-100..100)
+    """
+    # ucinamy do zakresu
+    s = max(-100, min(100, int(speed)))
+
+    if s == 0:
+        # Stop and brake
+        for m in group.motors:
+            m.off(brake=True)
+        return
+
+    sp = SpeedPercent(s)
+    for m in group.motors:
+        m.on(sp)
+
+try:
+    while True:
+        Leftlight = left_color_sensor.reflected_light_intensity
+        RightLight = right_color_sensor.reflected_light_intensity
+
+        LightDifference = Leftlight - RightLight
+
+        if abs(LightDifference) < 5:
+            # To do: make it steer with derivative and integral component
+            set_speed_percent(group, 50)  # Move forward at 50% speed
+            robotsteering.on_for_degrees(0, 0, brake=False, block=False)  # No steering
+        elif LightDifference >= 5:
+            set_speed_percent(group, 30)  # Move forward at 30% speed
+            robotsteering.on_for_degrees(-30, 10, brake=False, block=False)  # Turn left
+        elif LightDifference <= -5:
+            set_speed_percent(group, 30)  # Move forward at 30% speed
+            robotsteering.on_for_degrees(30, 10, brake=False, block=False)  # Turn right
+except KeyboardInterrupt:
+    print("Line following stopped by user.")
+
+
+group.stop() # Ensure the robot is stopped at the start
+steermotor.stop() # Ensure the steering motor is stopped at the start

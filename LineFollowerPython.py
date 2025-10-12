@@ -15,8 +15,8 @@ robot = MoveDifferential(OUTPUT_A, OUTPUT_B, 56, 114) # 56mm wheel diameter, 114
 robot.stop() # Ensure the robot is stopped at the start
 
 # Define the speed of the robot
-speed_on_turn = 200  # Speed while turning
-speed = 200  # Speed while driving forward
+speed_on_turn = 40  # Speed while turning
+speed = 40  # Speed while driving forward
 
 # Define the turn degrees
 turn_speed_multiplier = 1  # Turn speed multiplier
