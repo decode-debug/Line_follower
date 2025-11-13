@@ -285,14 +285,22 @@ def close_gripper():
     """Zamknięcie chwytaka i ustawienie stanu."""
     global grip_state
     if not GRIPPER_AVAILABLE:
+<<<<<<< HEAD
+        # print("Chwytak niedostępny (brak silnika na OUTPUT_C) — symuluję zamknięcie.")  # noqa: E501
+=======
         #print("Chwytak niedostępny (brak silnika na OUTPUT_C) — symuluję zamknięcie.")  # noqa: E501
+>>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
         grip_state = 'closed'
         return
     try:
         gripper.on_for_degrees(SpeedPercent(
             GRIPPER_SPEED), -GRIPPER_CLOSE_DEG, block=True)
         grip_state = 'closed'
+<<<<<<< HEAD
+        # print("Chwytak: zamknięto (gripper motor).")
+=======
         #print("Chwytak: zamknięto (gripper motor).")
+>>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
     except Exception as e:
         print("Błąd przy zamykaniu chwytaka:", e)
         grip_state = 'closed'
@@ -302,7 +310,11 @@ def open_gripper():
     """Otwarcie chwytaka i ustawienie stanu."""
     global grip_state
     if not GRIPPER_AVAILABLE:
+<<<<<<< HEAD
+        # print("Chwytak niedostępny (brak silnika na OUTPUT_C) — symuluję otwarcie.")  # noqa: E501
+=======
         #print("Chwytak niedostępny (brak silnika na OUTPUT_C) — symuluję otwarcie.")  # noqa: E501
+>>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
         grip_state = 'open'
         return
     try:
@@ -310,7 +322,11 @@ def open_gripper():
         gripper.on_for_degrees(SpeedPercent(
             GRIPPER_SPEED), -GRIPPER_OPEN_DEG, block=True)
         grip_state = 'open'
+<<<<<<< HEAD
+        # print("Chwytak: otwarto (gripper motor).")
+=======
         #print("Chwytak: otwarto (gripper motor).")
+>>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
     except Exception as e:
         print("Błąd przy otwieraniu chwytaka:", e)
         grip_state = 'open'
@@ -322,7 +338,11 @@ def rotate_180_degrees(speed_pct=30, fallback_seconds=1.5):
     jeśli nie jest dostępne używamy fallbacku: obrót w miejscu przez określony czas.  # noqa: E501
     """
     try:
+<<<<<<< HEAD
+        # print(">>> Rozpoczynam obrót o 180°.")
+=======
         #print(">>> Rozpoczynam obrót o 180°.")
+>>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
         # Use speed_pct directly, not wrapped in SpeedPercent
         robot.turn_degrees(180, speed_pct)
     except Exception as e:
@@ -542,16 +562,25 @@ def state_action(now, L, R, left_name, right_name):
         ricghtcirclespeed = BASE_SPEED
         color_seen_time = None
         input("Enter whatever: ")
+<<<<<<< HEAD
+    last_action_time = time.time()
+=======
        
 
     last_action_time = time.time()
 
 
+>>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
     # po akcji zwykle wracamy do FOLLOW_COLOR lub FOLLOW_BLACK (jeśli aktualny target to 'black')  # noqa: E501
     if current_target == 'black':
         return 'FOLLOW_BLACK'
     else:
         return 'FOLLOW_COLOR'
+<<<<<<< HEAD
+
+
+=======
+>>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
 left_name, right_name = None, None
 dttable = []
 # ---------------- Główna pętla (FSM) ----------------
@@ -577,8 +606,11 @@ try:
         L = left_color_sensor.reflected_light_intensity
         R = right_color_sensor.reflected_light_intensity
         error = R - L
+<<<<<<< HEAD
+=======
 
 
+>>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
         # Zanim przejdziemy do stanu wykonajmy uniwersalne sprawdzenie:
         # - Jeżeli jesteśmy w FOLLOW_BLACK i wykryto qualche kolor -> ROTATING (zrobione w funkcji stanu)  # noqa: E501
         # - Jeżeli oba czujniki widzą ten sam kolor i cooldown -> ACTION (obsługiwane w funkcjach stanów)  # noqa: E501
@@ -613,4 +645,8 @@ try:
 except KeyboardInterrupt:
     robot.off()
     print("Zatrzymano (KeyboardInterrupt).")
+<<<<<<< HEAD
     # print(dttable)
+=======
+    # print(dttable)
+>>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
