@@ -135,7 +135,7 @@ COLOR_ERROR_GAINS = {
 CHECK_INTERVAL = 0.12       # co ile sekund sprawdzać kolor
 # ile kolejnych wykryć by potwierdzić (w tej wersji nieużyteczne, zostawione)
 MIN_COLOR_CONFIRM = 1
-COLOR_LOST_TIMEOUT = 99999    # timeout gdy nie widzimy danego koloru (s)
+COLOR_LOST_TIMEOUT = 10    # timeout gdy nie widzimy danego koloru (s)
 
 # Parametry obrotu (jeżeli wykryjemy kolor jednym sensorem -> obracamy aż drugi zobaczy)  # noqa: E501
 # procentowy speed przy obracaniu (dla koła jadącego do przodu)
@@ -250,10 +250,11 @@ def rotate_until_both_see(target_color, initial_side, timeout=ROTATE_TIMEOUT):
     if initial_side == 'left':
         left_speed = -ROTATE_SPEED
         right_speed = ROTATE_SPEED
+        robot.turn_left(SpeedPercent(left_speed), 30)
     else:
         left_speed = ROTATE_SPEED
         right_speed = -ROTATE_SPEED
-
+        robot.turn_right(SpeedPercent(right_speed), 30)
     try:
         robot.on(SpeedPercent(left_speed),
                  SpeedPercent(right_speed))
@@ -285,22 +286,14 @@ def close_gripper():
     """Zamknięcie chwytaka i ustawienie stanu."""
     global grip_state
     if not GRIPPER_AVAILABLE:
-<<<<<<< HEAD
-        # print("Chwytak niedostępny (brak silnika na OUTPUT_C) — symuluję zamknięcie.")  # noqa: E501
-=======
         #print("Chwytak niedostępny (brak silnika na OUTPUT_C) — symuluję zamknięcie.")  # noqa: E501
->>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
         grip_state = 'closed'
         return
     try:
         gripper.on_for_degrees(SpeedPercent(
             GRIPPER_SPEED), -GRIPPER_CLOSE_DEG, block=True)
         grip_state = 'closed'
-<<<<<<< HEAD
-        # print("Chwytak: zamknięto (gripper motor).")
-=======
         #print("Chwytak: zamknięto (gripper motor).")
->>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
     except Exception as e:
         print("Błąd przy zamykaniu chwytaka:", e)
         grip_state = 'closed'
@@ -310,11 +303,7 @@ def open_gripper():
     """Otwarcie chwytaka i ustawienie stanu."""
     global grip_state
     if not GRIPPER_AVAILABLE:
-<<<<<<< HEAD
-        # print("Chwytak niedostępny (brak silnika na OUTPUT_C) — symuluję otwarcie.")  # noqa: E501
-=======
         #print("Chwytak niedostępny (brak silnika na OUTPUT_C) — symuluję otwarcie.")  # noqa: E501
->>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
         grip_state = 'open'
         return
     try:
@@ -322,29 +311,21 @@ def open_gripper():
         gripper.on_for_degrees(SpeedPercent(
             GRIPPER_SPEED), -GRIPPER_OPEN_DEG, block=True)
         grip_state = 'open'
-<<<<<<< HEAD
-        # print("Chwytak: otwarto (gripper motor).")
-=======
         #print("Chwytak: otwarto (gripper motor).")
->>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
     except Exception as e:
         print("Błąd przy otwieraniu chwytaka:", e)
         grip_state = 'open'
 
 
-def rotate_180_degrees(speed_pct=30, fallback_seconds=1.5):
+def rotate_180_degrees(speed_pct=30, fallback_seconds=1.3):
     """
     Obrót o ~180 stopni. Najpierw próbujemy MoveDifferential.turn_degrees,
     jeśli nie jest dostępne używamy fallbacku: obrót w miejscu przez określony czas.  # noqa: E501
     """
     try:
-<<<<<<< HEAD
-        # print(">>> Rozpoczynam obrót o 180°.")
-=======
         #print(">>> Rozpoczynam obrót o 180°.")
->>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
         # Use speed_pct directly, not wrapped in SpeedPercent
-        robot.turn_degrees(180, speed_pct)
+        robot.turn_degrees(speed_pct, 180)
     except Exception as e:
         print("Error during rotation: {}".format(e))
         print(">>> Używam fallbacku: obrót w miejscu przez określony czas.")
@@ -542,7 +523,7 @@ def state_action(now, L, R, left_name, right_name):
         close_gripper()
         sleep(0.2)
         print(">>> Obrót 180° po zamknięciu.")
-        rotate_180_degrees(speed_pct=30, fallback_seconds=1.6)
+        rotate_180_degrees(speed_pct=30, fallback_seconds=1.3)
         # reset i kontynuuj (wracamy do śledzenia aktualnego targetu)
         pid.reset()
         leftcirclespeed = BASE_SPEED
@@ -556,31 +537,22 @@ def state_action(now, L, R, left_name, right_name):
         sleep(0.15)
         print(">>> Cofanie po otwarciu.")
         backup_backward(speed_pct=BACKUP_SPEED, seconds=BACKUP_SECONDS)
-        rotate_180_degrees(speed_pct=30, fallback_seconds=1.6)
+        rotate_180_degrees(speed_pct=30, fallback_seconds=1.3)
         pid.reset()
         leftcirclespeed = BASE_SPEED
         ricghtcirclespeed = BASE_SPEED
         color_seen_time = None
         input("Enter whatever: ")
-<<<<<<< HEAD
-    last_action_time = time.time()
-=======
        
 
     last_action_time = time.time()
 
 
->>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
     # po akcji zwykle wracamy do FOLLOW_COLOR lub FOLLOW_BLACK (jeśli aktualny target to 'black')  # noqa: E501
     if current_target == 'black':
         return 'FOLLOW_BLACK'
     else:
         return 'FOLLOW_COLOR'
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
 left_name, right_name = None, None
 dttable = []
 # ---------------- Główna pętla (FSM) ----------------
@@ -597,7 +569,7 @@ try:
         last_time = now
         pid.dt = dt
 
-        if now - last_time1 > 0.15:
+        if now - last_time1 > 0.1:
             # Odczyt kolorów (często, bo potrzebny do wykryć)
             left_name, right_name = read_both_colors()
             last_time1 = now
@@ -606,11 +578,8 @@ try:
         L = left_color_sensor.reflected_light_intensity
         R = right_color_sensor.reflected_light_intensity
         error = R - L
-<<<<<<< HEAD
-=======
 
 
->>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
         # Zanim przejdziemy do stanu wykonajmy uniwersalne sprawdzenie:
         # - Jeżeli jesteśmy w FOLLOW_BLACK i wykryto qualche kolor -> ROTATING (zrobione w funkcji stanu)  # noqa: E501
         # - Jeżeli oba czujniki widzą ten sam kolor i cooldown -> ACTION (obsługiwane w funkcjach stanów)  # noqa: E501
@@ -645,8 +614,9 @@ try:
 except KeyboardInterrupt:
     robot.off()
     print("Zatrzymano (KeyboardInterrupt).")
-<<<<<<< HEAD
     # print(dttable)
-=======
-    # print(dttable)
->>>>>>> 154d17ec48a8a5723a563cc236af2fffa1776eb5
+
+
+
+
+# 
