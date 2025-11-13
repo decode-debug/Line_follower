@@ -91,7 +91,7 @@ except Exception:
     GRIPPER_AVAILABLE = False
 
 # ---------------- Parametry ruchu i PID ----------------
-BASE_SPEED = 40          # % bazowa prędkość
+BASE_SPEED = 10         # % bazowa prędkość
 DEADBAND = 5              # ignoruj drobne korekty
 MAX_CORRECTION = 100      # maksymalna korekta
 SLEW_LIMIT = 200          # ograniczenie delta prędkości/iterację
@@ -112,8 +112,8 @@ def limit_delta(delta, limit):
 leftcirclespeed = BASE_SPEED
 ricghtcirclespeed = BASE_SPEED
 
-pid = PIDController(kp=0.80, ki=0.0, kd=0.015, dt=0.01,
-                    integral_limit=10, d_alpha=0.2)
+pid = PIDController(kp=1.9, ki=0, kd=0, dt=0.01,
+                    integral_limit=4, d_alpha=0.2)
 
 # opcjonalna kalibracja bieli
 try:
@@ -124,11 +124,10 @@ except Exception as e:
 
 # ---------------- Logika kolorów ----------------
 # jakie kolory bierzemy pod uwagę
-COLORS_OF_INTEREST = ['blue', 'green', 'yellow']
+COLORS_OF_INTEREST = ['red', 'green']
 COLOR_ERROR_GAINS = {
-    'blue': 1.2,
-    'green': 1.15,
-    'yellow': 1.1,
+    'red': 1.0,
+    'green': 1.0,
     'black': 1.0
 }
 
@@ -145,12 +144,12 @@ ROTATE_SPEED = 10
 ROTATE_TIMEOUT = 99999
 
 # Parametry chwytaka i cofania
-GRIPPER_SPEED = 40          # procent dla silnika chwytaka
-GRIPPER_CLOSE_DEG = 360     # stopnie obrotu (przykład) - zamknięcie
-GRIPPER_OPEN_DEG = -360      # stopnie (negatywne) do otwarcia (dostosuj)
+GRIPPER_SPEED = 40           # procent dla silnika chwytaka
+GRIPPER_CLOSE_DEG = 360 * 8  # stopnie obrotu (przykład) - zamknięcie
+GRIPPER_OPEN_DEG = -360 * 8  # stopnie (negatywne) do otwarcia (dostosuj)
 GRIPPER_CLOSE_SECONDS = 0.8  # alternatywnie: czas w sekundach przy on_for_seconds  # noqa: E501
-BACKUP_SPEED = 30           # % prędkość cofania
-BACKUP_SECONDS = 1.0        # ile sekund się cofa
+BACKUP_SPEED = 30            # % prędkość cofania
+BACKUP_SECONDS = 1.0         # ile sekund się cofa
 
 # Cooldown by uniknąć powtórzeń akcji przy jednym detekcie
 ACTION_COOLDOWN = 1.0       # s
@@ -257,7 +256,7 @@ def rotate_until_both_see(target_color, initial_side, timeout=ROTATE_TIMEOUT):
 
     try:
         robot.on(SpeedPercent(left_speed),
-                 SpeedPercent(right_speed), brake=False)
+                 SpeedPercent(right_speed))
     except Exception:
         try:
             left_motor.on(SpeedPercent(left_speed))
@@ -286,14 +285,14 @@ def close_gripper():
     """Zamknięcie chwytaka i ustawienie stanu."""
     global grip_state
     if not GRIPPER_AVAILABLE:
-        print("Chwytak niedostępny (brak silnika na OUTPUT_C) — symuluję zamknięcie.")  # noqa: E501
+        #print("Chwytak niedostępny (brak silnika na OUTPUT_C) — symuluję zamknięcie.")  # noqa: E501
         grip_state = 'closed'
         return
     try:
         gripper.on_for_degrees(SpeedPercent(
-            GRIPPER_SPEED), GRIPPER_CLOSE_DEG, block=True)
+            GRIPPER_SPEED), -GRIPPER_CLOSE_DEG, block=True)
         grip_state = 'closed'
-        print("Chwytak: zamknięto (gripper motor).")
+        #print("Chwytak: zamknięto (gripper motor).")
     except Exception as e:
         print("Błąd przy zamykaniu chwytaka:", e)
         grip_state = 'closed'
@@ -303,15 +302,15 @@ def open_gripper():
     """Otwarcie chwytaka i ustawienie stanu."""
     global grip_state
     if not GRIPPER_AVAILABLE:
-        print("Chwytak niedostępny (brak silnika na OUTPUT_C) — symuluję otwarcie.")  # noqa: E501
+        #print("Chwytak niedostępny (brak silnika na OUTPUT_C) — symuluję otwarcie.")  # noqa: E501
         grip_state = 'open'
         return
     try:
         # używamy negatywnych stopni do otwarcia (dostosuj GRIPPER_OPEN_DEG jeśli potrzeba)  # noqa: E501
         gripper.on_for_degrees(SpeedPercent(
-            GRIPPER_SPEED), GRIPPER_OPEN_DEG, block=True)
+            GRIPPER_SPEED), -GRIPPER_OPEN_DEG, block=True)
         grip_state = 'open'
-        print("Chwytak: otwarto (gripper motor).")
+        #print("Chwytak: otwarto (gripper motor).")
     except Exception as e:
         print("Błąd przy otwieraniu chwytaka:", e)
         grip_state = 'open'
@@ -323,7 +322,7 @@ def rotate_180_degrees(speed_pct=30, fallback_seconds=1.5):
     jeśli nie jest dostępne używamy fallbacku: obrót w miejscu przez określony czas.  # noqa: E501
     """
     try:
-        print(">>> Rozpoczynam obrót o 180°.")
+        #print(">>> Rozpoczynam obrót o 180°.")
         # Use speed_pct directly, not wrapped in SpeedPercent
         robot.turn_degrees(180, speed_pct)
     except Exception as e:
@@ -346,7 +345,7 @@ def backup_backward(speed_pct=BACKUP_SPEED, seconds=BACKUP_SECONDS):
         # fallback: bez blokowania
         try:
             robot.on(SpeedPercent(-speed_pct),
-                     SpeedPercent(-speed_pct), brake=True)
+                     SpeedPercent(-speed_pct))
             sleep(seconds)
         finally:
             robot.off()
@@ -392,7 +391,7 @@ def state_follow_black(now, L, R, left_name, right_name):
 
     if not is_rotating:
         robot.on(SpeedPercent(leftcirclespeed),
-                 SpeedPercent(ricghtcirclespeed), brake=False)
+                 SpeedPercent(ricghtcirclespeed))
 
     # sprawdzanie: jeśli oba czujniki widzą ten sam kolor (dowolny), to możliwa akcja  # noqa: E501
     if (not is_rotating) and (left_name is not None) and (left_name == right_name):  # noqa: E501
@@ -448,7 +447,7 @@ def state_rotating(now, L, R, left_name, right_name):
 
 def state_follow_color(now, L, R, left_name, right_name):
     """
-    Stan: śledzimy current_target (np. 'blue').
+    Stan: śledzimy current_target (np. 'red').
     Jeśli zobaczymy 'black' -> wracamy do FOLLOW_BLACK.
     Jeśli oba sensory widzą ten sam kolor i cooldown -> ACTION.
     Jeśli stracimy kolor dłużej niż timeout -> FOLLOW_BLACK.
@@ -537,22 +536,27 @@ def state_action(now, L, R, left_name, right_name):
         sleep(0.15)
         print(">>> Cofanie po otwarciu.")
         backup_backward(speed_pct=BACKUP_SPEED, seconds=BACKUP_SECONDS)
+        rotate_180_degrees(speed_pct=30, fallback_seconds=1.6)
         pid.reset()
         leftcirclespeed = BASE_SPEED
         ricghtcirclespeed = BASE_SPEED
         color_seen_time = None
+        input("Enter whatever: ")
+       
 
     last_action_time = time.time()
+
 
     # po akcji zwykle wracamy do FOLLOW_COLOR lub FOLLOW_BLACK (jeśli aktualny target to 'black')  # noqa: E501
     if current_target == 'black':
         return 'FOLLOW_BLACK'
     else:
         return 'FOLLOW_COLOR'
-
-
+left_name, right_name = None, None
+dttable = []
 # ---------------- Główna pętla (FSM) ----------------
 last_time = time.time()
+last_time1 = time.time()
 try:
     print("Start. Początkowy target =", current_target,
           "| seen:", seen_colors, "| grip_state:", grip_state)
@@ -564,13 +568,16 @@ try:
         last_time = now
         pid.dt = dt
 
+        if now - last_time1 > 0.15:
+            # Odczyt kolorów (często, bo potrzebny do wykryć)
+            left_name, right_name = read_both_colors()
+            last_time1 = now
+
         # Odczyty światła (dla PID) - wykorzystujemy różnicę natężenia
-        L = left_color_sensor.reflected_light_intensity + 4
+        L = left_color_sensor.reflected_light_intensity
         R = right_color_sensor.reflected_light_intensity
         error = R - L
 
-        # Odczyt kolorów (często, bo potrzebny do wykryć)
-        left_name, right_name = read_both_colors()
 
         # Zanim przejdziemy do stanu wykonajmy uniwersalne sprawdzenie:
         # - Jeżeli jesteśmy w FOLLOW_BLACK i wykryto qualche kolor -> ROTATING (zrobione w funkcji stanu)  # noqa: E501
@@ -596,12 +603,14 @@ try:
 
         # Logujemy status w mniejszej częstotliwości (tu co pętlę — możesz zmniejszyć)  # noqa: E501
         current_gain = COLOR_ERROR_GAINS.get(current_target, 1.0)
-        if int(now * 10) % 5 == 0:  # co ok. 0.5 s
-            print("[T:{}] L_ref={}, R_ref={}, L_col={}, R_col={}, error={:.2f}, gain={:.2f}, "         # noqa: E501
-                  "speeds L={}, R={}, seen={}, grip={}, state={}, dt={:.4f}s".format(                  # noqa: E501
-                      current_target.upper(), L, R, left_name, right_name, error, current_gain,        # noqa: E501
-                      leftcirclespeed, ricghtcirclespeed, seen_colors, grip_state, current_state, dt   # noqa: E501
-                  ))
+        dttable.append(dt)
+        # if int(now * 10) % 5 == 0:  # co ok. 0.5 s
+        #     print("[T:{}] L_ref={}, R_ref={}, L_col={}, R_col={}, error={:.2f}, gain={:.2f}, "         # noqa: E501
+        #           "speeds L={}, R={}, seen={}, grip={}, state={}, dt={:.4f}s".format(                  # noqa: E501
+        #               current_target.upper(), L, R, left_name, right_name, error, current_gain,        # noqa: E501
+        #               leftcirclespeed, ricghtcirclespeed, seen_colors, grip_state, current_state, dt   # noqa: E501
+        #           ))
 except KeyboardInterrupt:
     robot.off()
     print("Zatrzymano (KeyboardInterrupt).")
+    # print(dttable)

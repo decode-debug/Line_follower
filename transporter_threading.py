@@ -142,7 +142,7 @@ class SensorPoller(threading.Thread):
                 # 1. Odczyty światła (BLOKUJĄCE)
                 L = self.left_sensor.reflected_light_intensity + 4
                 R = self.right_sensor.reflected_light_intensity
-
+                time.sleep(0.005)
                 # 2. Odczyty kolorów (BLOKUJĄCE)
                 left_name, right_name = self.read_both_colors_internal()
 
@@ -150,7 +150,7 @@ class SensorPoller(threading.Thread):
                 self.robot_state.update(L, R, left_name, right_name)
 
             except Exception as e:
-                print(f"BŁĄD w SensorPoller: {e}")
+                print("BŁĄD w SensorPoller:{}".format(e))
                 # Kontynuuj pętlę nawet po błędzie
 
             # Pauza, aby ten wątek nie zajął 100% CPU
@@ -190,7 +190,7 @@ class SensorPoller(threading.Thread):
 
 
 # ---------------- Parametry ruchu i PID ----------------
-BASE_SPEED = 40
+BASE_SPEED = 20
 DEADBAND = 5
 MAX_CORRECTION = 100
 SLEW_LIMIT = 200
@@ -294,7 +294,7 @@ def rotate_until_both_see(robot_state, target_color, initial_side, timeout=ROTAT
 
     try:
         robot.on(SpeedPercent(left_speed),
-                 SpeedPercent(right_speed), brake=False)
+                 SpeedPercent(right_speed))
     except Exception:
         try:
             left_motor.on(SpeedPercent(left_speed))
@@ -381,7 +381,7 @@ def backup_backward(speed_pct=BACKUP_SPEED, seconds=BACKUP_SECONDS):
     except Exception:
         try:
             robot.on(SpeedPercent(-speed_pct),
-                     SpeedPercent(-speed_pct), brake=True)
+                     SpeedPercent(-speed_pct))
             sleep(seconds)
         finally:
             robot.off()
@@ -420,7 +420,7 @@ def state_follow_black(now, L, R, left_name, right_name):
     )
     if not is_rotating:
         robot.on(SpeedPercent(leftcirclespeed),
-                 SpeedPercent(ricghtcirclespeed), brake=False)
+                 SpeedPercent(ricghtcirclespeed))
 
     # Sprawdzanie warunku do akcji
     if (not is_rotating) and (left_name is not None) and (left_name == right_name):
